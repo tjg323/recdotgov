@@ -56,3 +56,6 @@ Thumbs.db
 # Project specific
 *.log
 .env
+
+# Large data files
+RIDBFullExport_V1_CSV.zip

@@ -1,0 +1,45 @@
+# Google Cloud Build configuration
+steps:
+  # Build the container image with timestamp to force fresh build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--no-cache', '-t', 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_ID}', '-t', 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_TIMESTAMP:-latest}', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_ID}']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/campground-agent:latest']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'campground-agent'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_TIMESTAMP:-${_BUILD_ID}}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '2'
+      - '--timeout'
+      - '900'
+      - '--set-env-vars'
+      - 'ANTHROPIC_API_KEY=${_ANTHROPIC_API_KEY},GOOGLE_API_KEY=${_GOOGLE_API_KEY}'
+
+# Substitutions for build
+substitutions:
+  _ANTHROPIC_API_KEY: ''  # Will be set via build trigger
+  _GOOGLE_API_KEY: ''     # Will be set via build trigger
+  _BUILD_TIMESTAMP: ''    # Will be set via deploy script to force fresh builds
+
+# Build images
+images:
+  - 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_ID}'
+  - 'gcr.io/$PROJECT_ID/campground-agent:${_BUILD_TIMESTAMP:-latest}'

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏕️ Campground Availability Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d5016 0%, #3a6b1c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .query-section {
+            margin-bottom: 30px;
+        }
+
+        .query-section h2 {
+            color: #2d5016;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.cache {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.cache-info {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            font-family: monospace;
+            font-size: 0.9em;
+            white-space: pre-line;
+        }
+
+        .campground-results {
+            background: #ffffff;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .campground-item {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .campground-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2d5016;
+            margin-bottom: 8px;
+        }
+
+        .campground-details {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .booking-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .booking-link:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+
+        .examples {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .examples h3 {
+            color: #2d5016;
+            margin-bottom: 15px;
+        }
+
+        .example {
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .example:hover {
+            background: #f0f0f0;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .agent-selector {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .agent-selector h3 {
+            margin: 0 0 15px 0;
+            color: #2d5016;
+            font-size: 1.1em;
+        }
+
+        .agent-options {
+            display: flex;
+            gap: 15px;
+        }
+
+        .agent-option {
+            flex: 1;
+        }
+
+        .agent-option input[type="radio"] {
+            display: none;
+        }
+
+        .agent-option label {
+            display: block;
+            padding: 12px 16px;
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .agent-option input[type="radio"]:checked + label {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .agent-option label:hover {
+            border-color: #667eea;
+        }
+
+        .agent-badge {
+            display: inline-block;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #e9ecef;
+            color: #6c757d;
+            margin-left: 8px;
+        }
+
+        .agent-option input[type="radio"]:checked + label .agent-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .form-row .input-group {
+                margin-bottom: 20px;
+            }
+
+            .agent-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏕️ Campground Agent</h1>
+            <p>Find campgrounds with natural language queries</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('natural')">Natural Language</button>
+                <button class="tab" onclick="showTab('detailed')">Detailed Search</button>
+            </div>
+
+            <!-- Natural Language Tab -->
+            <div id="natural-tab" class="tab-content active">
+                <div class="query-section">
+                    <h2>🗣️ Ask in Plain English</h2>
+                    
+                    <!-- Agent Selector -->
+                    <div class="agent-selector">
+                        <h3>🤖 Choose AI Agent</h3>
+                        <div class="agent-options">
+                            <div class="agent-option">
+                                <input type="radio" id="claude-code" name="agent" value="claude-code" checked>
+                                <label for="claude-code">
+                                    Claude Code SDK
+                                    <span class="agent-badge">Current</span>
+                                </label>
+                            </div>
+                            <div class="agent-option">
+                                <input type="radio" id="google-adk" name="agent" value="google-adk">
+                                <label for="google-adk">
+                                    Google ADK
+                                    <span class="agent-badge" id="gemini-badge">Gemini 2.5</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Lite Mode Toggle (only visible for ADK) -->
+                        <div id="lite-mode-container" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="lite-mode" style="margin-right: 10px;">
+                                <span style="flex: 1;">
+                                    <strong>⚡ Lite Mode</strong>
+                                    <small style="display: block; color: #666; margin-top: 2px;">
+                                        Use Gemini 2.5 Flash Lite for faster, more efficient responses
+                                    </small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <form id="natural-form">
+                        <div class="input-group">
+                            <label for="query">What campgrounds are you looking for?</label>
+                            <textarea 
+                                id="query" 
+                                name="query" 
+                                placeholder="Find campgrounds along Highway 108 near Dardanelle for July 3rd..."
+                                required
+                            ></textarea>
+                        </div>
+                        <button type="submit" class="btn" id="search-btn">🔍 Search Campgrounds</button>
+                    </form>
+                </div>
+
+                <div class="examples">
+                    <h3>💡 Example Queries</h3>
+                    <div class="example" onclick="setQuery('Find campgrounds along Highway 108 near Dardanelle for July 3rd')">
+                        "Find campgrounds along Highway 108 near Dardanelle for July 3rd"
+                    </div>
+                    <div class="example" onclick="setQuery('Show me available campsites around South Lake Tahoe for July 4th weekend')">
+                        "Show me available campsites around South Lake Tahoe for July 4th weekend"
+                    </div>
+                    <div class="example" onclick="setQuery('Compare campground availability between Yosemite, Mammoth, and Lake Tahoe')">
+                        "Compare campground availability between Yosemite, Mammoth, and Lake Tahoe"
+                    </div>
+                    <div class="example" onclick="setQuery('Find campgrounds within 30 miles of Mammoth Lakes for July')">
+                        "Find campgrounds within 30 miles of Mammoth Lakes for July"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Search Tab -->
+            <div id="detailed-tab" class="tab-content">
+                <div class="query-section">
+                    <h2>🎯 Detailed Search</h2>
+                    <form id="detailed-form">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="location">Location</label>
+                                <input type="text" id="location" name="location" placeholder="Dardanelle, CA" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="date">Date</label>
+                                <input type="text" id="date" name="date" placeholder="July 3rd, 2025" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label for="distance">Distance (miles)</label>
+                                <input type="number" id="distance" name="distance" value="50" min="1" max="200">
+                            </div>
+                            <div class="input-group">
+                                <label for="route">Highway/Route (optional)</label>
+                                <input type="text" id="route" name="route" placeholder="Highway 108">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn" id="detailed-search-btn">🔍 Search Campgrounds</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="results" class="results">
+                <h3>🔄 Processing...</h3>
+                <div id="status-messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle agent selection changes
+        function handleAgentChange() {
+            const selectedAgent = document.querySelector('input[name="agent"]:checked').value;
+            const liteModeContainer = document.getElementById('lite-mode-container');
+            const geminiBadge = document.getElementById('gemini-badge');
+            const liteModeCheckbox = document.getElementById('lite-mode');
+            
+            if (selectedAgent === 'google-adk') {
+                // Show lite mode option for ADK
+                liteModeContainer.style.display = 'block';
+                updateGeminiBadge();
+            } else {
+                // Hide lite mode option for Claude
+                liteModeContainer.style.display = 'none';
+            }
+        }
+        
+        // Update the Gemini badge based on lite mode
+        function updateGeminiBadge() {
+            const geminiBadge = document.getElementById('gemini-badge');
+            const liteModeCheckbox = document.getElementById('lite-mode');
+            
+            if (liteModeCheckbox.checked) {
+                geminiBadge.textContent = 'Gemini 2.5 Lite';
+                geminiBadge.style.background = '#ffeaa7';
+                geminiBadge.style.color = '#6c5ce7';
+            } else {
+                geminiBadge.textContent = 'Gemini 2.5';
+                geminiBadge.style.background = '';
+                geminiBadge.style.color = '';
+            }
+        }
+        
+        // Add event listeners for agent selection
+        document.addEventListener('DOMContentLoaded', function() {
+            // Agent radio buttons
+            document.querySelectorAll('input[name="agent"]').forEach(radio => {
+                radio.addEventListener('change', handleAgentChange);
+            });
+            
+            // Lite mode checkbox
+            document.getElementById('lite-mode').addEventListener('change', updateGeminiBadge);
+            
+            // Initialize on page load
+            handleAgentChange();
+        });
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function setQuery(text) {
+            document.getElementById('query').value = text;
+        }
+
+        function addStatus(message, type = 'info') {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            document.getElementById('status-messages').appendChild(statusDiv);
+            
+            // Auto-scroll to bottom
+            const results = document.getElementById('results');
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function addAgentResponse(message) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status agent-response';
+            statusDiv.style.background = '#e3f2fd';
+            statusDiv.style.borderLeft = '4px solid #2196f3';
+            statusDiv.textContent = `🤖 ${message}`;
+            document.getElementById('status-messages').appendChild(statusDiv);
+            
+            // Auto-scroll to bottom
+            const results = document.getElementById('results');
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function addCommandOutput(message) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status command-output';
+            statusDiv.style.background = '#f5f5f5';
+            statusDiv.style.fontFamily = 'monospace';
+            statusDiv.style.fontSize = '0.9em';
+            statusDiv.textContent = message;
+            document.getElementById('status-messages').appendChild(statusDiv);
+            
+            // Auto-scroll to bottom
+            const results = document.getElementById('results');
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function addCacheInfo(message) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status cache-info';
+            statusDiv.textContent = message;
+            document.getElementById('status-messages').appendChild(statusDiv);
+            
+            // Auto-scroll to bottom
+            const results = document.getElementById('results');
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function addCampgroundResults(resultsData) {
+            const resultsContainer = document.createElement('div');
+            resultsContainer.className = 'campground-results';
+            
+            const title = document.createElement('h3');
+            title.textContent = '🏕️ Available Campgrounds';
+            title.style.color = '#2d5016';
+            title.style.marginBottom = '15px';
+            resultsContainer.appendChild(title);
+            
+            if (resultsData.campgrounds && resultsData.campgrounds.length > 0) {
+                resultsData.campgrounds.forEach((campground, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'campground-item';
+                    
+                    item.innerHTML = `
+                        <div class="campground-name">${index + 1}. ${campground.name}</div>
+                        <div class="campground-details">
+                            📏 Distance: ${campground.distance} miles<br>
+                            🏕️ Available sites: ${campground.site_count}<br>
+                            📅 Date: ${resultsData.date || 'July 3, 2025'}
+                        </div>
+                        <a href="https://www.recreation.gov/camping/campgrounds/${campground.facility_id}" 
+                           target="_blank" class="booking-link">
+                            📅 Book on Recreation.gov
+                        </a>
+                    `;
+                    
+                    resultsContainer.appendChild(item);
+                });
+            } else {
+                const noResults = document.createElement('div');
+                noResults.innerHTML = '❌ No available campsites found for the specified criteria.';
+                noResults.style.color = '#721c24';
+                noResults.style.padding = '10px';
+                resultsContainer.appendChild(noResults);
+            }
+            
+            document.getElementById('status-messages').appendChild(resultsContainer);
+            
+            // Auto-scroll to bottom
+            const results = document.getElementById('results');
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('status-messages').innerHTML = '';
+        }
+
+        function showResults() {
+            document.getElementById('results').classList.add('show');
+        }
+
+        function hideResults() {
+            document.getElementById('results').classList.remove('show');
+        }
+
+        // Natural language form
+        document.getElementById('natural-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('query').value;
+            const agentType = document.querySelector('input[name="agent"]:checked').value;
+            const liteMode = document.getElementById('lite-mode').checked;
+            const searchBtn = document.getElementById('search-btn');
+            
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔄 Searching...';
+            clearResults();
+            showResults();
+            
+            // Add agent type indicator
+            let agentDescription = 'Claude Code SDK';
+            if (agentType === 'google-adk') {
+                agentDescription = liteMode ? 'Google ADK (Gemini 2.5 Flash Lite)' : 'Google ADK (Gemini 2.5 Flash)';
+            }
+            addStatus(`🤖 Using ${agentDescription}`, 'info');
+            
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `query=${encodeURIComponent(query)}&agent=${encodeURIComponent(agentType)}&lite_mode=${liteMode}`
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'status') {
+                                    addStatus(data.message, 'info');
+                                } else if (data.type === 'parameters') {
+                                    addStatus(`📋 Parameters: ${data.location}, ${data.date}${data.route ? `, ${data.route}` : ''}`, 'info');
+                                } else if (data.type === 'result') {
+                                    addStatus(data.message, 'success');
+                                } else if (data.type === 'error') {
+                                    addStatus(data.message, 'error');
+                                } else if (data.type === 'done') {
+                                    addStatus('✅ Search completed!', 'success');
+                                } else if (data.type === 'agent_response') {
+                                    addAgentResponse(data.message);
+                                } else if (data.type === 'command_output') {
+                                    addCommandOutput(data.message);
+                                } else if (data.type === 'tool_use') {
+                                    addStatus(data.message, 'info');
+                                } else if (data.type === 'tool_result') {
+                                    addStatus(data.message, 'info');
+                                } else if (data.type === 'success') {
+                                    addStatus(data.message, 'success');
+                                } else if (data.type === 'cache_info') {
+                                    addCacheInfo(data.message);
+                                } else if (data.type === 'cache_hit') {
+                                    addStatus(data.message, 'cache');
+                                } else if (data.type === 'cache_update') {
+                                    addStatus(data.message, 'cache');
+                                } else if (data.type === 'warning') {
+                                    addStatus(data.message, 'warning');
+                                } else if (data.type === 'campground_results') {
+                                    addCampgroundResults(data);
+                                } else if (data.type === 'keepalive') {
+                                    // Ignore keepalive messages
+                                }
+                            } catch (e) {
+                                // Ignore JSON parse errors for partial data
+                            }
+                        }
+                    }
+                }
+
+            } catch (error) {
+                addStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Search Campgrounds';
+            }
+        });
+
+        // Detailed form (similar pattern)
+        document.getElementById('detailed-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const searchBtn = document.getElementById('detailed-search-btn');
+            
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔄 Searching...';
+            clearResults();
+            showResults();
+            
+            try {
+                const response = await fetch('/query-detailed', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.type === 'status') {
+                                    addStatus(data.message, 'info');
+                                } else if (data.type === 'result') {
+                                    addStatus(data.message, 'success');
+                                } else if (data.type === 'error') {
+                                    addStatus(data.message, 'error');
+                                } else if (data.type === 'done') {
+                                    addStatus('✅ Search completed!', 'success');
+                                }
+                            } catch (e) {
+                                // Ignore JSON parse errors
+                            }
+                        }
+                    }
+                }
+
+            } catch (error) {
+                addStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Search Campgrounds';
+            }
+        });
+    </script>
+</body>
+</html>
